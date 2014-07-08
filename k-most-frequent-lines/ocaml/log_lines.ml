@@ -1,6 +1,12 @@
-open Core.Std;;
+open Core.Std
 
-let cmp_snd_in_tuple a b =
+let tuple_less_than a b =
+  let a_snd = Tuple.T2.get2 a in
+  let b_snd = Tuple.T2.get2 b in
+  b_snd - a_snd
+;;
+
+let tuple_greater_than a b =
   let a_snd = Tuple.T2.get2 a in
   let b_snd = Tuple.T2.get2 b in
   a_snd - b_snd
@@ -19,16 +25,34 @@ let generate_frequency_table file_path =
   frequency_table
 ;;
 
-let generate_heap hash_table =
-  let heap = Hash_heap.Heap.create ~cmp:cmp_snd_in_tuple () in
-  Hashtbl.Poly.iter
-    ~f:(fun ~key:key ~data:data -> Hash_heap.Heap.add heap (key, data)) hash_table;  
-  heap
+let generate_heap frequency_table k =
+  let k_heap = Hash_heap.Heap.create ~cmp:tuple_greater_than () in
+
+  Hashtbl.keys frequency_table
+  |> Sequence.of_list
+  |> (fun seq -> Sequence.take seq k)
+  |> Sequence.iter
+      ~f:(fun line ->
+        let freq = Hashtbl.Poly.find_exn frequency_table line in
+        Hash_heap.Heap.add k_heap (line, freq);
+        Hashtbl.remove frequency_table line);
+
+  Hashtbl.iter frequency_table
+    ~f:(fun ~key:line ~data:freq ->
+      if freq > Tuple2.get2 (Option.value_exn (Hash_heap.Heap.top k_heap))
+      then Hash_heap.Heap.add k_heap (line, freq)
+      else ());
+
+  let reversed_heap = Hash_heap.Heap.create ~cmp:tuple_less_than ()
+  in Hash_heap.Heap.iter k_heap
+  ~f:(fun tuple -> Hash_heap.Heap.add reversed_heap tuple);
+
+  reversed_heap
 ;;
 
 let print_most_frequent_lines file_path k =
   let table = generate_frequency_table file_path in
-  let heap = generate_heap table in
+  let heap = generate_heap table k in
   let num_pops =
     if k < Hash_heap.Heap.length heap
     then k
