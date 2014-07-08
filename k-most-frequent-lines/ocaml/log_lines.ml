@@ -60,7 +60,7 @@ let print_most_frequent_lines file_path k =
 
   for _i = 1 to num_pops do
     let top = Option.value_exn (Hash_heap.Heap.pop heap) in
-    printf "%s : %d\n" (Tuple2.get1 top) (Tuple2.get2 top);
+    printf "%d : %s\n" (Tuple2.get2 top) (Tuple2.get1 top);
   done
 ;;
 
