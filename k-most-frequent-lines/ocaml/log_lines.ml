@@ -1,15 +1,15 @@
 open Core.Std
 
 let tuple_less_than a b =
-  let a_snd = Tuple.T2.get2 a in
-  let b_snd = Tuple.T2.get2 b in
-  b_snd - a_snd
+  Tuple.T2.(let a_snd = get2 a in
+            let b_snd = get2 b in
+            b_snd - a_snd)
 ;;
 
 let tuple_greater_than a b =
-  let a_snd = Tuple.T2.get2 a in
-  let b_snd = Tuple.T2.get2 b in
-  a_snd - b_snd
+  Tuple.T2.(let a_snd = get2 a in
+            let b_snd = get2 b in
+            a_snd - b_snd)
 ;;
 
 let generate_frequency_table file_path =
@@ -29,11 +29,10 @@ let generate_heap frequency_table k =
   let k_heap = Hash_heap.Heap.create ~cmp:tuple_greater_than () in
 
   Hashtbl.keys frequency_table
-  |> Sequence.of_list
   |> (fun seq -> Sequence.take seq k)
   |> Sequence.iter
       ~f:(fun line ->
-        let freq = Hashtbl.Poly.find_exn frequency_table line in
+        let freq = Hashtbl.find_exn frequency_table line in
         Hash_heap.Heap.add k_heap (line, freq);
         Hashtbl.remove frequency_table line);
 
@@ -65,9 +64,7 @@ let print_most_frequent_lines file_path k =
 ;;
 
 let () =
-
   let argc = Array.length Sys.argv in
-
   if argc < 2
   then
     printf "Filename is required."
